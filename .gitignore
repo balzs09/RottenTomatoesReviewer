@@ -1,5 +1,6 @@
 ./venv/
 *.csv
+!rt_sample.csv
 __pycache__/
 .idea/
 *.tsv
