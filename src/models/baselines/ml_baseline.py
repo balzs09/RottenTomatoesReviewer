@@ -1,12 +1,16 @@
 import pandas as pd
+import sys
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_DATA_PATH = BASE_DIR / "rt_sample.csv"
+ROOT_DIR = Path(__file__).resolve().parents[3]
+sys.path.append(str(ROOT_DIR))
+DEFAULT_DATA_PATH = ROOT_DIR / "data" / "rt_sample.csv"
+
+from src.evaluator.evaluator import evaluate_predictions
 
 def train_baseline(data_path: Path = DEFAULT_DATA_PATH):
     print("Minta adathalmaz betöltése.")
@@ -31,18 +35,17 @@ def train_baseline(data_path: Path = DEFAULT_DATA_PATH):
     X_test_vec = vectorizer.transform(X_test)
 
     print("Modell tanítása")
-    model = LogisticRegression(max_iter=1000, random_state=42)
+    #A saját class weight által nagyobb súlyt kapnak a ritka "Rotten" kritikák a filmek pozítív eltolódásának megoldásaként.
+    model = LogisticRegression(max_iter=1000, random_state=42,class_weight={0: 2.0, 1: 1.0})
     model.fit(X_train_vec, y_train)
 
-    #Kiértékelés a teszthalmazon
+    #Adatfelosztás indexek alpján
+    train_idx, test_idx = train_test_split(df.index, test_size=0.2, random_state=42, stratify=df['label'])
+    df_test = df.loc[test_idx]
+
+    # Kiértékelés a teszthalmazon
     y_pred = model.predict(X_test_vec)
-    accuracy = accuracy_score(y_test, y_pred)
-    print("\n--- ML BASELINE EREDMÉNYEK ---")
-    print(f"Pontosság: {accuracy*100:.2f}%\n")
-    print("Részletes metrikák:")
-    print(classification_report(y_test, y_pred, target_names=['Rotten', 'Fresh']))
-    print("Konfúziós mátrix:")
-    print(confusion_matrix(y_test, y_pred))
+    evaluate_predictions(df_test, df_test['label'], y_pred, model_name="ML BASELINE")
 
     return model,vectorizer
 
