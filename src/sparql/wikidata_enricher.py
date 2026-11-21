@@ -125,44 +125,6 @@ def fetch_movie_data(movie_title: str, target_year: int) :
         "genres" : row.get("genres", {}).get("value", ""),
     }
 
-def diagnose_movie(qid: str):
-    sparql = SPARQLWrapper(WIKIDATA_ENDPOINT, agent=USER_AGENT)
-    sparql.setReturnFormat(JSON)
-    sparql.setMethod("POST")
-
-    sparql.setQuery(f"""
-    SELECT ?label ?type ?date ?dir ?sl WHERE {{
-      BIND(wd:{qid} AS ?m)
-      OPTIONAL {{ ?m rdfs:label ?label. FILTER(LANG(?label) = "en") }}
-      OPTIONAL {{ ?m wdt:P31 ?type. }}
-      OPTIONAL {{ ?m wdt:P577 ?date. }}
-      OPTIONAL {{ ?m wdt:P57 ?dir. }}
-      OPTIONAL {{ ?m wikibase:sitelinks ?sl. }}
-    }}
-    """)
-
-
-    bindings = sparql.query().convert()["results"]["bindings"]
-    print(f"\n{qid}: {len(bindings)} sor")
-
-    # Mezőnként az egyedi értékek (a keresztszorzat miatt a sorok ismétlődnek)
-    for field in ["label", "type", "date", "dir", "sl"]:
-        values = sorted({b[field]["value"] for b in bindings if field in b})
-        print(f"  {field:6}: {values if values else 'HIÁNYZIK'}")
-
-def check_labels(qid: str):
-    sparql = SPARQLWrapper(WIKIDATA_ENDPOINT, agent=USER_AGENT)
-    sparql.setReturnFormat(JSON)
-    sparql.setMethod("POST")
-    sparql.setQuery(f"""
-    SELECT ?l WHERE {{ wd:{qid} rdfs:label ?l. }}
-    """)
-
-    bindings = sparql.query().convert()["results"]["bindings"]
-    print(f"\n{qid} címkéi ({len(bindings)} db):")
-    for b in bindings:
-        print(f"  {b['l']['value']}  @{b['l']['xml:lang']}")
-
 
 if __name__ == "__main__":
     test_result = fetch_movie_data("Toy Story 4", 2019)

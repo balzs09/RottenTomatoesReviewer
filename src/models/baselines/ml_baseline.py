@@ -36,7 +36,7 @@ def train_baseline(data_path: Path = DEFAULT_DATA_PATH):
 
     print("Modell tanítása")
     #A saját class weight által nagyobb súlyt kapnak a ritka "Rotten" kritikák a filmek pozítív eltolódásának megoldásaként.
-    model = LogisticRegression(max_iter=1000, random_state=42,class_weight={0: 2.0, 1: 1.0})
+    model = LogisticRegression(max_iter=1000, random_state=42, class_weight={0: 1.9, 1: 1.0} )
     model.fit(X_train_vec, y_train)
 
     #Adatfelosztás indexek alpján
